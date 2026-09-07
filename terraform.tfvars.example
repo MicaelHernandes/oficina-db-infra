@@ -1,0 +1,10 @@
+# Copie para terraform.tfvars (git-ignored) OU forneça via TF_VAR_* no CI.
+# Este repo lê rede/EKS do repo 2 via terraform_remote_state (S3) —
+# não há segredos de rede aqui. A senha do banco é gerada pelo Terraform.
+
+region            = "us-east-1"
+project           = "oficina"
+db_name           = "oficina"
+db_username       = "oficina_admin"
+db_engine_version = "16.4"
+db_instance_class = "db.t4g.micro"

@@ -41,7 +41,7 @@ variable "db_allocated_storage" {
 }
 
 variable "backup_retention_period" {
-  description = "Dias de retenção de backup."
+  description = "Dias de retenção de backup. O Free plan da conta limita a retenção (CreateDBInstance falha com FreeTierRestrictionError acima do teto)."
   type        = number
-  default     = 7
+  default     = 1
 }

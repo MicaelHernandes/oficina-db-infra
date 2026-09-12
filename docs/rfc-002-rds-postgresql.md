@@ -27,6 +27,6 @@ O domínio é fortemente **relacional**: `order_services` referencia `customers`
 
 ## Consequências
 
-- **Positivas:** operação mínima, backups automáticos (7 dias), credenciais fora do código, isolamento de rede (privado + SG restritivo), compatibilidade total com o app e com a Lambda.
+- **Positivas:** operação mínima, backups automáticos (1 dia, teto do Free plan da conta), credenciais fora do código, isolamento de rede (privado + SG restritivo), compatibilidade total com o app e com a Lambda.
 - **Negativas / trade-offs:** single-AZ (sem failover automático — aceitável para o escopo do desafio); `deletion_protection = false` e `skip_final_snapshot = true` para permitir `destroy` limpo após a apresentação — **não usar assim em produção real**.
 - **Custo:** dentro do Free Tier enquanto `db.t4g.micro` + 20 GB. Destruir após a apresentação.

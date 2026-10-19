@@ -93,3 +93,37 @@ resource "aws_db_instance" "this" {
 
   tags = local.tags
 }
+
+# --- Bancos dos microsserviços (Fase 4) -----------------------------------
+# Cada microsserviço SQL tem database e usuário próprios na MESMA instância
+# (evita uma segunda instância RDS). O Terraform só gera a credencial: o RDS
+# está em subnet privada, então o CREATE ROLE/DATABASE roda num Job dentro do
+# cluster, na pipeline do próprio serviço, usando /oficina/rds/master. O
+# usuário do serviço só enxerga o próprio database.
+resource "random_password" "service" {
+  for_each = toset(var.service_databases)
+
+  length  = 24
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "service" {
+  for_each = toset(var.service_databases)
+
+  name = "/oficina/rds/${each.key}"
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "service" {
+  for_each = toset(var.service_databases)
+
+  secret_id = aws_secretsmanager_secret.service[each.key].id
+  secret_string = jsonencode({
+    username = "${each.key}_svc"
+    password = random_password.service[each.key].result
+    engine   = "postgres"
+    host     = aws_db_instance.this.address
+    port     = aws_db_instance.this.port
+    dbname   = each.key
+  })
+}

@@ -45,3 +45,9 @@ variable "backup_retention_period" {
   type        = number
   default     = 1
 }
+
+variable "service_databases" {
+  description = "Databases de microsserviços na mesma instância; cada um ganha usuário próprio e o secret /oficina/rds/<nome>."
+  type        = list(string)
+  default     = ["execution"]
+}

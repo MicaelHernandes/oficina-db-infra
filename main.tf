@@ -112,6 +112,9 @@ resource "aws_secretsmanager_secret" "service" {
 
   name = "/oficina/rds/${each.key}"
   tags = local.tags
+  # Sem janela de recuperação: o ambiente é destruído e recriado entre as
+  # apresentações, e um secret "agendado para exclusão" bloqueia recriar o nome.
+  recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "service" {

@@ -67,3 +67,8 @@ resource "aws_ssm_parameter" "security_group_id" {
   value = aws_security_group.rds.id
   tags  = local.tags
 }
+
+output "service_secret_arns" {
+  description = "Mapa database do microsserviço -> ARN do secret com as credenciais dele."
+  value       = { for k, s in aws_secretsmanager_secret.service : k => s.arn }
+}

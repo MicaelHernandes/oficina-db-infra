@@ -7,13 +7,14 @@ Infraestrutura do **banco de dados gerenciado** (Terraform) do **Tech Challenge 
 | [oficina-k8s-infra](https://github.com/MicaelHernandes/oficina-k8s-infra) | VPC, EKS, ECR, ALB, DNS/TLS, monitoring, OIDC |
 | **oficina-db-infra** (este) | RDS PostgreSQL gerenciado |
 | [oficina-auth-lambda](https://github.com/MicaelHernandes/oficina-auth-lambda) | Lambda de auth por CPF + API Gateway |
-| [oficina-api](https://github.com/MicaelHernandes/oficina-api) | Aplicação Laravel no EKS |
+| [oficina-api](https://github.com/MicaelHernandes/oficina-api) | OS Service (Laravel no EKS) — database `oficina` |
+| [oficina-execution-service](https://github.com/MicaelHernandes/oficina-execution-service) | Execution Service — database `execution` na mesma instância |
 
 ## Tecnologias
 
 - **Terraform** (backend S3 + lock DynamoDB), provider `aws`, `random`.
 - **Amazon RDS for PostgreSQL 16**, `db.t4g.micro`, 20 GB gp3, single-AZ, **não público**.
-- **AWS Secrets Manager** para a senha master.
+- **AWS Secrets Manager** para a senha master e as credenciais de cada microsserviço (`/oficina/rds/<database>`).
 - **SSM Parameter Store** (`/oficina/db/*`) para expor endpoint/secret aos demais repos.
 
 ## Arquitetura
@@ -32,6 +33,13 @@ flowchart LR
 ```
 
 O SG do RDS abre a porta 5432 **apenas** para o SG dos nós EKS. A regra para o SG da Lambda é criada pelo **repo 1** (que lê `/oficina/db/security_group_id`).
+
+## Bancos dos microsserviços (Fase 4)
+
+Na Fase 4 cada microsserviço tem banco próprio e nenhum acessa o banco de outro. Para não pagar uma segunda instância, os serviços SQL ganham **database e usuário próprios na mesma instância** (`var.service_databases`, hoje `["execution"]`):
+
+- O Terraform gera a senha e grava `/oficina/rds/<database>` no Secrets Manager (mesmo formato do secret master, com `username = <database>_svc` e `dbname = <database>`).
+- O RDS está em subnet privada, então o `CREATE ROLE` / `CREATE DATABASE` roda num **Job dentro do cluster**, disparado pela pipeline do próprio serviço com as credenciais master. O usuário do serviço é dono só do próprio database.
 
 ## Dependência de ordem
 
@@ -61,7 +69,7 @@ Requer o secret **`AWS_ROLE_ARN`** (role OIDC criada pelo repo 2 — `oficina-gh
 
 ## Outputs (também no SSM `/oficina/db/*`)
 
-`rds_endpoint`, `rds_address`, `rds_port`, `db_name`, `secret_arn`, `security_group_id`.
+`rds_endpoint`, `rds_address`, `rds_port`, `db_name`, `secret_arn`, `security_group_id`, `service_secret_arns`.
 
 Formato do secret `/oficina/rds/master`:
 
